@@ -1,0 +1,7 @@
+[2023-05-18 00:35:28,039] - INFO - Server started on 127.0.0.1:8000
+[2023-05-18 00:35:47,474] - INFO - connected 127.0.0.1:64095
+[2023-05-18 00:35:47,476] - WARNING - 127.0.0.1:64095 unexpectedly disconnected
+[2023-05-18 00:36:35,279] - INFO - connected 127.0.0.1:64128
+[2023-05-18 00:36:35,280] - WARNING - 127.0.0.1:64128 unexpectedly disconnected
+[2023-05-18 00:43:41,862] - INFO - connected 127.0.0.1:64420
+[2023-05-18 00:43:41,863] - WARNING - 127.0.0.1:64420 unexpectedly disconnected

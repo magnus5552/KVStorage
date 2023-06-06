@@ -1,0 +1,13 @@
+[2023-05-18 19:49:14,786] - INFO - server started on 127.0.0.1:8000
+[2023-05-18 19:49:15,988] - INFO - connected 127.0.0.1:53789
+[2023-05-18 19:49:15,988] - WARNING - wrong request signature: ()
+[2023-05-18 19:49:15,989] - INFO - client 127.0.0.1:53789 served
+[2023-05-18 19:49:15,989] - INFO - connected 127.0.0.1:53790
+[2023-05-18 19:49:15,989] - WARNING - 127.0.0.1 not subscribed
+[2023-05-18 19:49:15,989] - INFO - client 127.0.0.1:53790 served
+[2023-05-18 19:50:19,603] - INFO - connected 127.0.0.1:53808
+[2023-05-18 19:50:19,603] - WARNING - wrong request signature: ('127.0.0.1',)
+[2023-05-18 19:50:19,603] - INFO - client 127.0.0.1:53808 served
+[2023-05-18 19:50:19,604] - INFO - connected 127.0.0.1:53809
+[2023-05-18 19:50:19,604] - WARNING - 127.0.0.1 not subscribed
+[2023-05-18 19:50:19,606] - INFO - client 127.0.0.1:53809 served
