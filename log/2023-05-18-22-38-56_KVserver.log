@@ -1,7 +1,0 @@
-[2023-05-18 22:38:56,193] - INFO - server started on 127.0.0.1:8000
-[2023-05-18 22:38:58,397] - INFO - connected 127.0.0.1:57527
-[2023-05-18 22:38:58,398] - INFO - subscribed 127.0.0.1
-[2023-05-18 22:38:58,398] - INFO - client 127.0.0.1:57527 served
-[2023-05-18 22:38:58,398] - INFO - connected 127.0.0.1:57528
-[2023-05-18 22:38:58,399] - WARNING - wrong request signature: value
-[2023-05-18 22:38:58,399] - INFO - client 127.0.0.1:57528 served

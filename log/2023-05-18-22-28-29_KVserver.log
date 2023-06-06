@@ -1,6 +1,0 @@
-[2023-05-18 22:28:29,413] - INFO - server started on 127.0.0.1:8000
-[2023-05-18 22:28:29,675] - INFO - connected 127.0.0.1:57122
-[2023-05-18 22:28:29,675] - WARNING - 127.0.0.1 not subscribed
-[2023-05-18 22:28:29,676] - INFO - client 127.0.0.1:57122 served
-[2023-05-18 22:28:30,331] - INFO - connected 127.0.0.1:57127
-[2023-05-18 22:28:30,331] - WARNING - wrong request signature: ('8001',)

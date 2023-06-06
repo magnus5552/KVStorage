@@ -1,3 +1,0 @@
-[2023-05-18 22:27:05,918] - INFO - server started on 127.0.0.1:8000
-[2023-05-18 22:27:17,832] - INFO - connected 127.0.0.1:57100
-[2023-05-18 22:27:17,833] - WARNING - wrong request signature: (<KVserver.KVNode object at 0x0000026131F9AF80>, '8001')
