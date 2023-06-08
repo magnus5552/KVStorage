@@ -7,6 +7,7 @@ import pathlib
 import aiofiles
 import inspect
 import functools
+from KVstorage import to_bytes
 
 
 def init_logger():
@@ -80,11 +81,20 @@ class KVNode:
     def disconnect(self):
         self._writer.close()
 
-    async def write_data(self, key: str, value: str):
-        query = bytes(f"write {key} {value}\n", encoding="utf8")
-        self._writer.write(query)
+    async def write(self, data: str):
+        await self.connect()
 
+        self._writer.write(to_bytes(data))
         await self._writer.drain()
+
+    async def write_data(self, key: str, value: str):
+        await self.write(f"write {key} {value}")
+
+    async def get_capacity(self):
+        await self.write("capacity")
+
+        response = await self._reader.readline()
+        return int(response.decode())
 
     def __eq__(self, other):
         return other is KVNode and other.host == self.host
@@ -155,8 +165,8 @@ class Server:
             case "subscribe":
                 response = await self.subscribe_node(node, *req_split[1:])
             case _:
-                self.logger.error("unknown command")
-                response = b"ERROR"
+                self.logger.error("Unknown command")
+                response = b"Unknown command"
 
         return response
 
@@ -171,7 +181,6 @@ class Server:
 
     @check_args
     async def write_data(self, node: KVNode, key: str, value: str) -> bytes:
-
         if node.host not in self.nodes.keys():
             self.logger.warning(f"{node.host} not subscribed")
             return b"Client not subscribed. Subscribe to write data."
@@ -186,24 +195,29 @@ class Server:
 
     @check_args
     async def get_data(self, node: KVNode, key: str):
-        pass
+        await node.write(f"get {key}")
+        data = await node._reader.readline()
+        node.disconnect()
+
+        return data
 
     async def get_least_node(self) -> KVNode:
         known_capacity = 0
         capacity = -1
         while known_capacity != capacity:
             known_capacity, node_host = self.nodes_capacities.get(block=False)
-            capacity = await self.request_capacity(node_host)
+
+            node = self.nodes[node_host]
+
+            capacity = await node.get_capacity()
+            node.disconnect()
+
             self.nodes_capacities.put((capacity, node_host))
 
         capacity, node_host = self.nodes_capacities.get(block=False)
 
         return self.nodes[node_host]
 
-
-
-    async def request_capacity(self, host: str):
-        return 0
 
     async def write_to_client(self, node: KVNode, key: str, value: str):
         if not node.is_connected:
@@ -215,3 +229,6 @@ class Server:
         self.logger.info(f"write {key}:{value} to {node.host}")
 
 
+if __name__ == "__main__":
+    server = Server("127.0.0.1", 8000)
+    asyncio.run(server.start_server())
