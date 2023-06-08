@@ -40,10 +40,23 @@ def check_args(func, skip=1):
         if len(args) != args_count:
             signature = " ".join(args[skip:])
             self.logger.warning(f"wrong request signature: {signature}")
-            return bytes(f"Wrong request signature: {signature}",
-                         encoding="utf8")
+            return to_bytes(f"Wrong request signature: {signature}")
 
         return await func(self, *args, *kwargs)
+    return wrapper
+
+
+def subscribtion_required(func):
+    @functools.wraps(func)
+    async def wrapper(self, *args, **kwargs):
+        node = args[0] if len(args) > 0 and isinstance(args[0], KVNode) \
+            else None
+
+        if node is not None and node.host not in self.nodes.keys():
+            self.logger.warning(f"{node.host} not subscribed")
+            return b"Client not subscribed. Subscribe to write data."
+
+        return await func(self, *args, **kwargs)
     return wrapper
 
 
@@ -133,7 +146,7 @@ class Server:
         self.logger.info(f"connected {ip}")
 
         request = await reader.readline()
-        print(request)
+
         if request is None:
             self.logger.warning(f"{ip} unexpectedly disconnected")
         else:
@@ -144,7 +157,6 @@ class Server:
 
             await self.send_response(writer, response)
             self.logger.info(f"client {ip} served")
-        print(self.keys_map)
 
     async def send_response(self,
                             writer: asyncio.StreamWriter,
@@ -179,11 +191,9 @@ class Server:
 
         return b"OK"
 
+    @subscribtion_required
     @check_args
     async def write_data(self, node: KVNode, key: str, value: str) -> bytes:
-        if node.host not in self.nodes.keys():
-            self.logger.warning(f"{node.host} not subscribed")
-            return b"Client not subscribed. Subscribe to write data."
 
         node = await self.get_least_node()
 
