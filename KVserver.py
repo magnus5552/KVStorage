@@ -1,12 +1,14 @@
 import asyncio
-import queue
-from datetime import datetime
+import functools
+import inspect
 import logging
 import os.path
 import pathlib
+import queue
+from collections import defaultdict
+from datetime import datetime
+from typing import Callable, Awaitable, DefaultDict
 import aiofiles
-import inspect
-import functools
 from KVstorage import to_bytes
 
 
@@ -43,6 +45,7 @@ def check_args(func, skip=1):
             return to_bytes(f"Wrong request signature: {signature}")
 
         return await func(self, *args, *kwargs)
+
     return wrapper
 
 
@@ -57,6 +60,7 @@ def subscribtion_required(func):
             return b"Client not subscribed. Subscribe to write data."
 
         return await func(self, *args, **kwargs)
+
     return wrapper
 
 
@@ -124,6 +128,15 @@ class Server:
         self.host: str = host
         self.port: int = port
         self.logger: logging.Logger = init_logger()
+        # Словарь команд для сервера. Каждая команда может обрабатываться
+        # несколькими функциями, поэтому по ключу хранятся функции
+        self.commands: DefaultDict[str, list[Callable[[KVNode, ...],
+                                   Awaitable[bytes]]]] = \
+            defaultdict(lambda: [], {
+                "write": [self.write_data],
+                "get": [self.get_data],
+                "subscribe": [self.subscribe_node]
+            })
 
     async def start_server(self):
         server = await asyncio.start_server(self.serve_client, self.host,
@@ -149,14 +162,16 @@ class Server:
 
         if request is None:
             self.logger.warning(f"{ip} unexpectedly disconnected")
-        else:
-            node = self.nodes[host] if host in self.nodes.keys() \
-                else KVNode(host, port, reader=reader, writer=writer)
+            writer.close()
+            return
 
-            response = await self.handle_request(request, node)
+        node = self.nodes[host] if host in self.nodes.keys() \
+            else KVNode(host, port, reader=reader, writer=writer)
 
-            await self.send_response(writer, response)
-            self.logger.info(f"client {ip} served")
+        response = await self.handle_request(request, node)
+
+        await self.send_response(writer, response)
+        self.logger.info(f"client {ip} served")
 
     async def send_response(self,
                             writer: asyncio.StreamWriter,
@@ -169,18 +184,16 @@ class Server:
         req_split = request.decode().split()
         command = req_split[0]
 
-        match command:
-            case "write":
-                response = await self.write_data(node, *req_split[1:])
-            case "get":
-                response = await self.get_data(node, *req_split[1:])
-            case "subscribe":
-                response = await self.subscribe_node(node, *req_split[1:])
-            case _:
-                self.logger.error("Unknown command")
-                response = b"Unknown command"
+        if command not in self.commands.keys():
+            self.logger.error("Unknown command")
+            return to_bytes(f"Unknown command: {command}")
 
-        return response
+        responses = []
+
+        for func in self.commands[command]:
+            responses.append(await func(node, *req_split[1:]))
+
+        return b" | ".join(responses)
 
     @check_args
     async def subscribe_node(self, node: KVNode, port: int) -> bytes:
@@ -228,14 +241,11 @@ class Server:
 
         return self.nodes[node_host]
 
-
     async def write_to_client(self, node: KVNode, key: str, value: str):
-        if not node.is_connected:
-            await node.connect()
-
+        await node.connect()
         await node.write_data(key, value)
-
         node.disconnect()
+
         self.logger.info(f"write {key}:{value} to {node.host}")
 
 
